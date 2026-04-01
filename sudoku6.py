@@ -39,9 +39,6 @@ class Context:
 class SudokuApp(clingo.Application):
     program_name = "sudoku6"
 
-    def __init__(self):
-        self.context = None
-
     def print_model(self, model, printer):
         sudoku = Sudoku.from_model(model)
         print(str(sudoku))
@@ -61,14 +58,14 @@ class SudokuApp(clingo.Application):
         else:
             board = Sudoku({})
 
-        self.context = Context(board)
+        context = Context(board)
 
         ctl.add("base", [], SUDOKU_ENCODING)
         ctl.add("base", [], BRIDGE)
         for f in lp_files:
             ctl.load(f)
 
-        ctl.ground([("base", [])], context=self.context)
+        ctl.ground([("base", [])], context=context)
         ctl.solve(on_model=lambda m: None)
 
 
