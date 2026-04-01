@@ -1,23 +1,33 @@
 import sys
-from clingo.application import Application, clingo_main
+import clingo
 from sudoku_board import Sudoku
 
 
-class SudokuApp(Application):
-    program_name = "sudoku4"
-    version = "1.0"
+SUDOKU_ENCODING = """
+{ sudoku(R,C,V) : V = 1..9 } = 1 :- R = 1..9, C = 1..9.
+sudoku(R,C,V) :- initial(R,C,V).
+:- sudoku(R,C1,V), sudoku(R,C2,V), C1 != C2.
+:- sudoku(R1,C,V), sudoku(R2,C,V), R1 != R2.
+:- sudoku(R1,C1,V), sudoku(R2,C2,V), R1 != R2,
+   (R1-1)/3 == (R2-1)/3, (C1-1)/3 == (C2-1)/3.
+#show sudoku/3.
+"""
 
-    def main(self, control, files):
-        control.load("sudoku.lp")
-        for f in files:
-            control.load(f)
-        control.ground([("base", [])])
-        control.solve()
+
+class SudokuApp(clingo.Application):
+    program_name = "sudoku4"
 
     def print_model(self, model, printer):
         sudoku = Sudoku.from_model(model)
-        printer(str(sudoku))
+        print(str(sudoku))
+
+    def main(self, ctl, files):
+        ctl.add("base", [], SUDOKU_ENCODING)
+        for f in files:
+            ctl.load(f)
+        ctl.ground([("base", [])])
+        ctl.solve(on_model=lambda m: None)
 
 
 if __name__ == "__main__":
-    sys.exit(clingo_main(SudokuApp(), sys.argv[1:]))
+    clingo.clingo_main(SudokuApp(), sys.argv[1:])
