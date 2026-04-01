@@ -1,51 +1,44 @@
+from typing import Tuple
 import clingo
-import clingo.solving
 
 
 class Sudoku:
+    def __init__(self, sudoku: dict[Tuple[int, int], int]):
+        self.sudoku = sudoku
 
-    def __init__(self, board: dict):
-        self.board = board
-        self.sudoku = board  # tests access both .board and .sudoku
+    def __str__(self) -> str:
+        rows = []
+        for r in range(1, 10):
+            cells = []
+            for c in range(1, 10):
+                cells.append(str(self.sudoku[(r, c)]))
+            row = " ".join(cells[0:3]) + "  " + " ".join(cells[3:6]) + "  " + " ".join(cells[6:9])
+            rows.append(row)
+
+        s = "\n".join(rows[0:3]) + "\n\n" + "\n".join(rows[3:6]) + "\n\n" + "\n".join(rows[6:9])
+        return s
 
     @classmethod
-    def from_model(cls, model: clingo.solving.Model) -> 'Sudoku':
-        board = {}
+    def from_str(cls, s: str) -> "Sudoku":
+        sudoku = {}
+        lines = [line.strip() for line in s.splitlines() if line.strip() != ""]
+
+        for r, line in enumerate(lines, start=1):
+            tokens = line.split()
+            for c, token in enumerate(tokens, start=1):
+                if token != "-":
+                    sudoku[(r, c)] = int(token)
+
+        return cls(sudoku)
+
+    @classmethod
+    def from_model(cls, model: clingo.solving.Model) -> "Sudoku":
+        sudoku = {}
         for sym in model.symbols(shown=True):
             if sym.name == "sudoku" and len(sym.arguments) == 3:
                 row = sym.arguments[0].number
                 col = sym.arguments[1].number
                 val = sym.arguments[2].number
-                board[(row, col)] = val
-        return cls(board)
+                sudoku[(row, col)] = val
 
-    @classmethod
-    def from_str(cls, s: str) -> 'Sudoku':
-        sudoku = {}
-        lines = [line for line in s.splitlines() if line.strip() != ""]
-        row = 1
-        for line in lines:
-            tokens = line.split()
-            col = 1
-            for token in tokens:
-                if token != "-":
-                    sudoku[(row, col)] = int(token)
-                col += 1
-            row += 1
         return cls(sudoku)
-
-    def __str__(self) -> str:
-        s = ""
-        for row in range(1, 10):
-            if row in (4, 7):
-                s += "\n"
-            row_str = ""
-            for col in range(1, 10):
-                if col in (4, 7):
-                    row_str += " "
-                val = self.board.get((row, col), "-")
-                row_str += str(val)
-                if col < 9:
-                    row_str += " "
-            s += row_str + "\n"
-        return s.rstrip("\n")
