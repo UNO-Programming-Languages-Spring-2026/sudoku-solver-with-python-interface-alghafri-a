@@ -32,7 +32,7 @@ class SudokuApp(Application):
         sudoku = Sudoku.from_str(text)
         context = Context(sudoku)
 
-        control.load("sudoku.lp")
+        control.load("solutions/sudoku.lp")
         control.load("sudoku_py.lp")
         control.ground([("base", [])], context=context)
         control.solve()
