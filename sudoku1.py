@@ -11,6 +11,7 @@ class SudokuApp(clingo.Application):
         print(" ".join(atoms))
 
     def main(self, ctl, files):
+        ctl.load("sudoku.lp")
         for f in files:
             ctl.load(f)
         ctl.ground([("base", [])])
