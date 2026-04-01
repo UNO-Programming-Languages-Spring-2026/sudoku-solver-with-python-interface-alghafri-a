@@ -1,7 +1,5 @@
 import sys
-from pathlib import Path
 import clingo
-from clingo.application import Application, clingo_main
 from sudoku_board import Sudoku
 
 
@@ -10,56 +8,43 @@ class Context:
         self.board = board
 
     def initial(self):
-        facts = []
-        for (r, c), v in self.board.sudoku.items():
-            facts.append(
+        result = []
+        for (row, col), value in self.board.sudoku.items():
+            result.append(
                 clingo.Function(
                     "initial",
-                    [clingo.Number(r), clingo.Number(c), clingo.Number(v)]
+                    [
+                        clingo.Number(row),
+                        clingo.Number(col),
+                        clingo.Number(value)
+                    ]
                 )
             )
-        return facts
+        return result
 
 
-class SudokuApp(Application):
+class SudokuApp(clingo.Application):
     program_name = "sudoku6"
     version = "1.0"
 
-    def main(self, control, files):
-        if not files:
-            raise RuntimeError("Missing input file")
+    def main(self, control: clingo.Control, files):
+        filename = files[0]
 
-        input_file = files[0]
-
-        with open(input_file, "r", encoding="utf-8") as f:
+        with open(filename, "r", encoding="utf-8") as f:
             text = f.read()
 
-        board = Sudoku.from_str(text)
-        context = Context(board)
+        sudoku = Sudoku.from_str(text)
+        context = Context(sudoku)
 
-        candidates = [
-            Path("sudoku.lp"),
-            Path("solutions") / "sudoku.lp",
-        ]
-
-        loaded = False
-        for path in candidates:
-            if path.exists():
-                control.load(str(path))
-                loaded = True
-                break
-
-        if not loaded:
-            raise RuntimeError("Could not find sudoku.lp")
-
+        control.load("solutions/sudoku.lp")
         control.load("sudoku_py.lp")
         control.ground([("base", [])], context=context)
         control.solve()
 
-    def print_model(self, model, printer):
+    def print_model(self, model: clingo.solving.Model, printer):
         sudoku = Sudoku.from_model(model)
         printer(str(sudoku))
 
 
 if __name__ == "__main__":
-    clingo_main(SudokuApp(), sys.argv[1:])
+    sys.exit(clingo.clingo_main(SudokuApp(), sys.argv[1:]))
