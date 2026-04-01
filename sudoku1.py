@@ -15,11 +15,11 @@ sudoku(R,C,V) :- initial(R,C,V).
 
 
 class SudokuApp(clingo.Application):
-    program_name = "sudoku1"
+    program_name = "sudoku4"
 
     def print_model(self, model, printer):
-        atoms = sorted(str(sym) for sym in model.symbols(shown=True))
-        print(" ".join(atoms))
+        sudoku = Sudoku.from_model(model)
+        print(str(sudoku))
 
     def main(self, ctl, files):
         ctl.add("base", [], SUDOKU_ENCODING)
