@@ -1,61 +1,46 @@
 import sys
 import clingo
-import clingo.symbol
+from clingo.application import Application, clingo_main
 from sudoku_board import Sudoku
 
 
 class Context:
-
     def __init__(self, board: Sudoku):
         self.board = board
 
-    def initial(self) -> list:
+    def initial(self):
         result = []
-        for (row, col), val in sorted(self.board.board.items()):
-            tup = clingo.Function("", [
-                clingo.Number(row),
-                clingo.Number(col),
-                clingo.Number(val)
-            ], True)
-            result.append(tup)
+        for (row, col), value in self.board.sudoku.items():
+            result.append(
+                clingo.Function(
+                    "",
+                    [clingo.Number(row), clingo.Number(col), clingo.Number(value)],
+                    True,
+                )
+            )
         return result
 
 
-class SudokuApp(clingo.Application):
+class SudokuApp(Application):
     program_name = "sudoku6"
+    version = "1.0"
 
-    def __init__(self):
-        self.context = None
+    def main(self, control, files):
+        with open(files[0], "r", encoding="utf-8") as f:
+            text = f.read()
+
+        sudoku = Sudoku.from_str(text)
+        context = Context(sudoku)
+
+        control.load("sudoku.lp")
+        control.load("sudoku_py.lp")
+        control.ground([("base", [])], context=context)
+        control.solve()
 
     def print_model(self, model, printer):
         sudoku = Sudoku.from_model(model)
-        print(str(sudoku))
-
-    def main(self, ctl, files):
-        txt_file = None
-        lp_files = []
-        for f in files:
-            if f.endswith(".txt"):
-                txt_file = f
-            else:
-                lp_files.append(f)
-
-        if txt_file:
-            with open(txt_file) as fh:
-                board = Sudoku.from_str(fh.read())
-        else:
-            board = Sudoku({})
-
-        self.context = Context(board)
-
-        ctl.load("sudoku.lp")
-        ctl.load("sudoku_py.lp")
-        for f in lp_files:
-            ctl.load(f)
-
-        ctl.ground([("base", [])], context=self.context)
-        ctl.solve(on_model=lambda m: None)
+        printer(str(sudoku))
 
 
 if __name__ == "__main__":
-    clingo.clingo_main(SudokuApp(), sys.argv[1:])
+    sys.exit(clingo_main(SudokuApp(), sys.argv[1:]))
