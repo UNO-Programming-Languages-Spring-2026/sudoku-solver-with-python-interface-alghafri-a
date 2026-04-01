@@ -11,12 +11,12 @@ class Context:
 
     def initial(self) -> list:
         result = []
-        for (row, col), val in self.board.board.items():
+        for (row, col), val in sorted(self.board.board.items()):
             tup = clingo.Function("", [
                 clingo.Number(row),
                 clingo.Number(col),
                 clingo.Number(val)
-            ])
+            ], True)
             result.append(tup)
         return result
 
@@ -48,9 +48,10 @@ class SudokuApp(clingo.Application):
 
         self.context = Context(board)
 
+        ctl.load("sudoku.lp")
+        ctl.load("sudoku_py.lp")
         for f in lp_files:
             ctl.load(f)
-        ctl.load("sudoku_py.lp")
 
         ctl.ground([("base", [])], context=self.context)
         ctl.solve(on_model=lambda m: None)
