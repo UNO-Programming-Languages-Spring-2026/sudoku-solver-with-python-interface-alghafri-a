@@ -1,22 +1,22 @@
 import sys
-import clingo
-from sudoku_board import Sudoku
+from clingo.application import Application, clingo_main
 
 
-class SudokuApp(clingo.Application):
+class SudokuApp(Application):
     program_name = "sudoku1"
+    version = "1.0"
+
+    def main(self, control, files):
+        control.load("sudoku.lp")
+        for f in files:
+            control.load(f)
+        control.ground([("base", [])])
+        control.solve()
 
     def print_model(self, model, printer):
         atoms = sorted(str(sym) for sym in model.symbols(shown=True))
-        print(" ".join(atoms))
-
-    def main(self, ctl, files):
-        ctl.load("sudoku.lp")
-        for f in files:
-            ctl.load(f)
-        ctl.ground([("base", [])])
-        ctl.solve(on_model=lambda m: None)
+        printer(" ".join(atoms))
 
 
 if __name__ == "__main__":
-    clingo.clingo_main(SudokuApp(), sys.argv[1:])
+    sys.exit(clingo_main(SudokuApp(), sys.argv[1:]))
