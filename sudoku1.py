@@ -7,7 +7,7 @@ class SudokuApp(Application):
     version = "1.0"
 
     def main(self, control, files):
-        control.load("sudoku.lp")
+        control.load("solutions/sudoku.lp")
         for f in files:
             control.load(f)
         control.ground([("base", [])])
